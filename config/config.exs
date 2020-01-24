@@ -1,5 +1,5 @@
 use Mix.Config
 
-config :scrum_keeper, port: 4001
+config :scrum_keeper, ecto_repos: [ScrumKeeper.Repo]
 
 import_config "#{Mix.env}.exs"

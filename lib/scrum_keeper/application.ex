@@ -6,12 +6,16 @@ defmodule ScrumKeeper.Application do
   use Application
 
   def start(_type, _args) do
-    port = Application.get_env(:scrum_keeper, :port, 4001)
+    import Supervisor.Spec, warn: false
 
+    # port = Application.get_env(:scrum_keeper, :port, 4001)
+    slack_token = Application.get_env(:scrum_keeper, ScrumKeeper.SlackBot)[:token]
+    IO.inspect slack_token
+
+    options = %{keepalive: 10000, name: :scrum_keeper}
     children = [
-      Plug.Cowboy.child_spec(scheme: :http, plug: ScrumKeeper.Router, options: [port: port])
-      # Starts a worker by calling: ScrumKeeper.Worker.start_link(arg)
-      # {ScrumKeeper.Worker, arg}
+      ScrumKeeper.Repo,
+      worker(Slack.Bot, [ScrumKeeper.SlackBot, [], slack_token, options], [restart: :transient])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
