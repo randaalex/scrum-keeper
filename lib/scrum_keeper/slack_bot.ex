@@ -1,6 +1,8 @@
 defmodule ScrumKeeper.SlackBot do
   use Slack
 
+  alias ScrumKeeper.Slack.{DirectMessagePipeline, ChannelMessagePipeline}
+
   require Logger
 
   def handle_connect(slack, state) do
@@ -14,22 +16,20 @@ defmodule ScrumKeeper.SlackBot do
 
     Logger.debug "Handling message: #{inspect(message.text)}"
 
-    case message do
-      # direct message
-      %{channel: "D" <> _, text: command} ->
-        Logger.debug("direct mess, #{command}")
-        Slack.DirectMessageHandler.call(command)
-      # channel mess with mention
-      %{text: <<"<@", _ :: binary-size(bot_id_size), "> ", command::binary>>} ->
-        Logger.debug("chann mess from #{message.user}, #{command}")
-        Slack.ChannelMessageHandler.call(command, message.user)
-      _ ->
-        Logger.debug("lol kek")
-    end
+    response =
+      case message do
+        %{channel: "D" <> _, text: text} ->
+          # handle_direct_message(text, message, slack)
+          DirectMessagePipeline.call(text, message.user)
+        %{text: <<"<@", _ :: binary-size(bot_id_size), "> ", text::binary>>} ->
+          # handle_channel_message(text, message, slack)
+          ChannelMessagePipeline.call(text, message.user)
+        _ -> nil
+      end
 
-    # IO.puts "Handle message: #{message.text}"
-    # Slack.ResponseBuilder.call(message, slack)
-    # send_message("I got a message!", message.channel, slack)
+    if response do
+      send_message(response, message.channel, slack)
+    end
 
     {:ok, state}
   end
