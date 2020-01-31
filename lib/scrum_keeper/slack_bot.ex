@@ -10,6 +10,8 @@ defmodule ScrumKeeper.SlackBot do
     {:ok, state}
   end
 
+  @bot_name Application.get_env(:scrum_keeper, ScrumKeeper.SlackBot)[:bot_id]
+
   def handle_event(message = %{type: "message"}, slack, state) do
     bot_id = slack.me.id
     bot_id_size = byte_size(bot_id)
@@ -21,7 +23,7 @@ defmodule ScrumKeeper.SlackBot do
         %{channel: "D" <> _, text: text} ->
           # handle_direct_message(text, message, slack)
           DirectMessagePipeline.call(text, message.user)
-        %{text: <<"<@", _ :: binary-size(bot_id_size), "> ", text::binary>>} ->
+        %{text: "<@" <> @bot_name <> "> " <> text} ->
           # handle_channel_message(text, message, slack)
           ChannelMessagePipeline.call(text, message.user)
         _ -> nil
